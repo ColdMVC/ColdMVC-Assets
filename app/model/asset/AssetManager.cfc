@@ -9,6 +9,7 @@ component {
 	public any function init() {
 
 		packages = {};
+		cached = {};
 
 		types = {
 			"script" = "js",
@@ -17,8 +18,139 @@ component {
 
 	}
 
+	public struct function getAssets() {
+
+		return cache;
+
+	}
+
+	/**
+	 * @events applicationStart
+	 */
+	public void function loadAssets() {
+
+		deleteAssets();
+		findAssets("js");
+		findAssets("images");
+		findAssets("css");
+
+	}
+
+	private void function deleteAssets() {
+
+		lock name="plugins.assets.app.model.AssetManager" type="exclusive" timeout="5" throwontimeout="true" {
+			deleteDirectory("js");
+			deleteDirectory("css");
+			deleteDirectory("images");
+		}
+
+	}
+
+	private void function deleteDirectory(required string directory) {
+
+		directory = expandPath("/public/#directory#/plugins/");
+
+		if (directoryExists(directory)) {
+			directoryDelete(directory, true);
+		}
+
+	}
+
+	private void function findAssets(required string directory) {
+
+		cache[directory] = {};
+
+		var plugins = pluginManager.getPlugins();
+		var i = "";
+		var j = "";
+		var paths = [];
+
+		arrayAppend(paths, {
+			source = "/public/#directory#/",
+			url = directory & "/",
+			destination = ""
+		});
+
+		for (i = 1; i <= arrayLen(plugins); i++) {
+
+			arrayAppend(paths, {
+				source = plugins[i].mapping & "/public/#directory#/",
+				url = directory & "/plugins/" & plugins[i].name & "/",
+				destination = "/public/" & directory & "/plugins/" & plugins[i].name & "/"
+			});
+
+		}
+
+		for (i = 1; i <= arrayLen(paths); i++) {
+
+			var expandedDirectory = replace(expandPath(paths[i].source), "\", "/", "all");
+
+			if (directoryExists(expandedDirectory)) {
+
+				var files = directoryList(expandedDirectory, true, "path");
+
+				for (j = 1; j <= arrayLen(files); j++) {
+
+					var filePath = replace(files[j], "\", "/", "all");
+					var name = replace(filePath, expandedDirectory, "");
+
+					if (!structKeyExists(cache[directory], name)) {
+
+						var asset = {
+							name = name,
+							source = paths[i].source & name,
+							destination = paths[i].destination & name,
+							url = paths[i].url & name,
+							generated = false
+						};
+
+						if (paths[i].destination == "") {
+							asset.generated = true;
+						}
+
+						cache[directory][asset.name] = asset;
+
+					}
+
+				}
+
+			}
+
+		}
+
+	}
+
+	public string function getAssetURL(required string type, required string name) {
+
+		if (structKeyExists(cache, type) && structKeyExists(cache[type], name)) {
+
+			var asset = cache[type][name];
+
+			if (!asset.generated) {
+
+				var source = expandPath(asset.source);
+				var destination = expandPath(asset.destination);
+				var directory = getDirectoryFromPath(destination);
+
+				if (!directoryExists(directory)) {
+					directoryCreate(directory);
+				}
+
+				fileCopy(source, destination);
+				asset.generated = true;
+			}
+
+			return asset.url;
+
+		}
+
+		return type & "/" & name;
+
+	}
+
 	public void function setPluginManager(required any pluginManager) {
 
+		variables.pluginManager = arguments.pluginManager;
 		var plugins = pluginManager.getPlugins();
 		var path = "/config/assets.xml";
 		var i = "";
@@ -111,9 +243,7 @@ component {
 			if (arrayLen(package.css.array) > 0) {
 
 				generatePackage(package, name, "css");
-
 				package.html.addAll(package.css.html);
-
 				package.css.url = coldmvc.asset.linkToCSS("packages/#name#.css");
 
 				arrayAppend(package.html, '<link rel="stylesheet" href="#package.css.url#?v=#package.css.hash#" type="text/css" media="all" />');
@@ -123,9 +253,7 @@ component {
 			if (arrayLen(package.js.array) > 0) {
 
 				generatePackage(package, name, "js");
-
 				package.html.addAll(package.js.html);
-
 				package.js.url = coldmvc.asset.linkToJS("packages/#name#.js");
 
 				arrayAppend(package.html, '<script type="text/javascript" src="#package.js.url#?v=#package.js.hash#"></script>');
