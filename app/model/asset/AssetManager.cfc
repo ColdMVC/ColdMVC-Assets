@@ -4,6 +4,7 @@
  */
 component {
 
+	property fileSystemFacade;
 	property pluginManager;
 
 	public any function init() {
@@ -50,7 +51,7 @@ component {
 
 		directory = expandPath("/public/#directory#/plugins/");
 
-		if (directoryExists(directory)) {
+		if (fileSystemFacade.directoryExists(directory)) {
 			directoryDelete(directory, true);
 		}
 
@@ -85,7 +86,7 @@ component {
 
 			var expandedDirectory = replace(expandPath(paths[i].source), "\", "/", "all");
 
-			if (directoryExists(expandedDirectory)) {
+			if (fileSystemFacade.directoryExists(expandedDirectory)) {
 
 				var files = directoryList(expandedDirectory, true, "path");
 
@@ -132,7 +133,7 @@ component {
 				var destination = expandPath(asset.destination);
 				var directory = getDirectoryFromPath(destination);
 
-				if (!directoryExists(directory)) {
+				if (!fileSystemFacade.directoryExists(directory)) {
 					directoryCreate(directory);
 				}
 
@@ -168,11 +169,11 @@ component {
 
 	public void function loadXML(required string filePath) {
 
-		if (!fileExists(filePath)) {
+		if (!fileSystemFacade.fileExists(filePath)) {
 			filePath = expandPath(filePath);
 		}
 
-		if (fileExists(filePath)) {
+		if (fileSystemFacade.fileExists(filePath)) {
 
 			var xml = xmlParse(fileRead(filePath));
 			var i = "";
@@ -303,7 +304,7 @@ component {
 
 		var directory = expandPath("/public/#type#/packages/");
 
-		if (!directoryExists(directory)) {
+		if (!fileSystemFacade.directoryExists(directory)) {
 			directoryCreate(directory);
 		}
 
