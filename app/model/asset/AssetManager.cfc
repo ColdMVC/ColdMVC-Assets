@@ -1,6 +1,7 @@
 /**
  * @accessors true
- * @extends coldmvc.Singleton
+ * @singleton
+ * @initMethod setup
  */
 component {
 
@@ -149,9 +150,8 @@ component {
 
 	}
 
-	public void function setPluginManager(required any pluginManager) {
+	public void function setup() {
 
-		variables.pluginManager = arguments.pluginManager;
 		var plugins = pluginManager.getPlugins();
 		var path = "/config/assets.xml";
 		var i = "";
@@ -285,12 +285,11 @@ component {
 
 				if (type == "css") {
 					arrayAppend(package[type].html, '<link rel="stylesheet" href="#asset.url#" type="text/css" media="all" />');
-				}
-				else {
+				} else {
 					arrayAppend(package[type].html, '<script type="text/javascript" src="#asset.url#"></script>');
 				}
-			}
-			else {
+
+			} else {
 
 				arrayAppend(content, "/* #asset.name#: #asset.path# */" & chr(10) & fileRead(expandPath(asset.path)));
 
