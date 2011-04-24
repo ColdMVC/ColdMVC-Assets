@@ -69,7 +69,7 @@ component {
 
 		arrayAppend(paths, {
 			source = "/public/#directory#/",
-			url = directory & "/",
+			url = "/" & directory & "/",
 			destination = ""
 		});
 
@@ -77,7 +77,7 @@ component {
 
 			arrayAppend(paths, {
 				source = plugins[i].mapping & "/public/#directory#/",
-				url = directory & "/plugins/" & plugins[i].name & "/",
+				url = "/" & directory & "/plugins/" & plugins[i].name & "/",
 				destination = "/public/" & directory & "/plugins/" & plugins[i].name & "/"
 			});
 
@@ -146,7 +146,7 @@ component {
 
 		}
 
-		return type & "/" & name;
+		return "/" & type & "/" & name;
 
 	}
 
