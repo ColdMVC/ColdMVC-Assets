@@ -5,15 +5,15 @@
  */
 component {
 
-	property fileSystemFacade;
+	property fileSystem;
 	property pluginManager;
 
 	public any function init() {
 
-		packages = {};
-		cached = {};
+		variables.packages = {};
+		variables.cache = {};
 
-		types = {
+		variables.types = {
 			"script" = "js",
 			"style" = "css"
 		};
@@ -22,7 +22,7 @@ component {
 
 	public struct function getAssets() {
 
-		return cache;
+		return variables.cache;
 
 	}
 
@@ -50,17 +50,17 @@ component {
 
 	private void function deleteDirectory(required string directory) {
 
-		directory = expandPath("/public/#directory#/plugins/");
+		arguments.directory = expandPath("/public/#arguments.directory#/plugins/");
 
-		if (fileSystemFacade.directoryExists(directory)) {
-			directoryDelete(directory, true);
+		if (fileSystem.directoryExists(arguments.directory)) {
+			directoryDelete(arguments.directory, true);
 		}
 
 	}
 
 	private void function findAssets(required string directory) {
 
-		cache[directory] = {};
+		variables.cache[arguments.directory] = {};
 
 		var plugins = pluginManager.getPlugins();
 		var i = "";
@@ -68,17 +68,17 @@ component {
 		var paths = [];
 
 		arrayAppend(paths, {
-			source = "/public/#directory#/",
-			url = "/" & directory & "/",
+			source = "/public/" & arguments.directory & "/",
+			url = "/" & arguments.directory & "/",
 			destination = ""
 		});
 
 		for (i = 1; i <= arrayLen(plugins); i++) {
 
 			arrayAppend(paths, {
-				source = plugins[i].mapping & "/public/#directory#/",
-				url = "/" & directory & "/plugins/" & plugins[i].name & "/",
-				destination = "/public/" & directory & "/plugins/" & plugins[i].name & "/"
+				source = plugins[i].mapping & "/public/" & arguments.directory & "/",
+				url = "/" & arguments.directory & "/plugins/" & plugins[i].name & "/",
+				destination = "/public/" & arguments.directory & "/plugins/" & plugins[i].name & "/"
 			});
 
 		}
@@ -87,7 +87,7 @@ component {
 
 			var expandedDirectory = replace(expandPath(paths[i].source), "\", "/", "all");
 
-			if (fileSystemFacade.directoryExists(expandedDirectory)) {
+			if (fileSystem.directoryExists(expandedDirectory)) {
 
 				var files = directoryList(expandedDirectory, true, "path");
 
@@ -96,7 +96,7 @@ component {
 					var filePath = replace(files[j], "\", "/", "all");
 					var name = replace(filePath, expandedDirectory, "");
 
-					if (!structKeyExists(cache[directory], name)) {
+					if (!structKeyExists(variables.cache[arguments.directory], name)) {
 
 						var asset = {
 							name = name,
@@ -110,7 +110,7 @@ component {
 							asset.generated = true;
 						}
 
-						cache[directory][asset.name] = asset;
+						variables.cache[arguments.directory][asset.name] = asset;
 
 					}
 
@@ -124,9 +124,9 @@ component {
 
 	public string function getAssetURL(required string type, required string name) {
 
-		if (structKeyExists(cache, type) && structKeyExists(cache[type], name)) {
+		if (structKeyExists(variables.cache, arguments.type) && structKeyExists(variables.cache[arguments.type], arguments.name)) {
 
-			var asset = cache[type][name];
+			var asset = variables.cache[arguments.type][arguments.name];
 
 			if (!asset.generated) {
 
@@ -134,7 +134,7 @@ component {
 				var destination = expandPath(asset.destination);
 				var directory = getDirectoryFromPath(destination);
 
-				if (!fileSystemFacade.directoryExists(directory)) {
+				if (!fileSystem.directoryExists(directory)) {
 					directoryCreate(directory);
 				}
 
@@ -146,7 +146,7 @@ component {
 
 		}
 
-		return "/" & type & "/" & name;
+		return "/" & arguments.type & "/" & arguments.name;
 
 	}
 
@@ -169,13 +169,13 @@ component {
 
 	public void function loadXML(required string filePath) {
 
-		if (!fileSystemFacade.fileExists(filePath)) {
-			filePath = expandPath(filePath);
+		if (!fileSystem.fileExists(arguments.filePath)) {
+			arguments.filePath = expandPath(arguments.filePath);
 		}
 
-		if (fileSystemFacade.fileExists(filePath)) {
+		if (fileSystem.fileExists(arguments.filePath)) {
 
-			var xml = xmlParse(fileRead(filePath));
+			var xml = xmlParse(fileRead(arguments.filePath));
 			var i = "";
 			for (i = 1; i <= arrayLen(xml.packages.xmlChildren); i++) {
 
@@ -208,9 +208,9 @@ component {
 
 	public struct function getPackage(required string name) {
 
-		if (!structKeyExists(packages, name)) {
+		if (!structKeyExists(variables.packages, arguments.name)) {
 
-			packages[name] = {
+			variables.packages[arguments.name] = {
 				css = {
 					struct = {},
 					array = [],
@@ -229,13 +229,13 @@ component {
 
 		}
 
-		return packages[name];
+		return variables.packages[arguments.name];
 
 	}
 
 	public string function renderPackage(required string name) {
 
-		var package = getPackage(name);
+		var package = getPackage(arguments.name);
 
 		if (!package.generated) {
 
@@ -243,9 +243,9 @@ component {
 
 			if (arrayLen(package.css.array) > 0) {
 
-				generatePackage(package, name, "css");
+				generatePackage(package, arguments.name, "css");
 				package.html.addAll(package.css.html);
-				package.css.url = coldmvc.asset.linkToCSS("packages/#name#.css");
+				package.css.url = coldmvc.asset.linkToCSS("packages/#arguments.name#.css");
 
 				arrayAppend(package.html, '<link rel="stylesheet" href="#package.css.url#?v=#package.css.hash#" type="text/css" media="all" />');
 
@@ -253,9 +253,9 @@ component {
 
 			if (arrayLen(package.js.array) > 0) {
 
-				generatePackage(package, name, "js");
+				generatePackage(package, arguments.name, "js");
 				package.html.addAll(package.js.html);
-				package.js.url = coldmvc.asset.linkToJS("packages/#name#.js");
+				package.js.url = coldmvc.asset.linkToJS("packages/#arguments.name#.js");
 
 				arrayAppend(package.html, '<script type="text/javascript" src="#package.js.url#?v=#package.js.hash#"></script>');
 
@@ -273,7 +273,7 @@ component {
 
 	private void function generatePackage(required struct package, required string name, required string type) {
 
-		var assets = package[type].array;
+		var assets = arguments.package[arguments.type].array;
 		var content = [];
 		var i = "";
 
@@ -283,10 +283,10 @@ component {
 
 			if (asset.url != "") {
 
-				if (type == "css") {
-					arrayAppend(package[type].html, '<link rel="stylesheet" href="#asset.url#" type="text/css" media="all" />');
+				if (arguments.type == "css") {
+					arrayAppend(arguments.package[arguments.type].html, '<link rel="stylesheet" href="#asset.url#" type="text/css" media="all" />');
 				} else {
-					arrayAppend(package[type].html, '<script type="text/javascript" src="#asset.url#"></script>');
+					arrayAppend(arguments.package[arguments.type].html, '<script type="text/javascript" src="#asset.url#"></script>');
 				}
 
 			} else {
@@ -299,15 +299,15 @@ component {
 
 		content = arrayToList(content, chr(10) & chr(10));
 
-		package[type].hash = lcase(hash(content));
+		arguments.package[arguments.type].hash = lcase(hash(content));
 
-		var directory = expandPath("/public/#type#/packages/");
+		var directory = expandPath("/public/#arguments.type#/packages/");
 
-		if (!fileSystemFacade.directoryExists(directory)) {
+		if (!fileSystem.directoryExists(directory)) {
 			directoryCreate(directory);
 		}
 
-		fileWrite(directory & "#name#.#type#", content);
+		fileWrite(directory & "#arguments.name#.#arguments.type#", content);
 
 	}
 
