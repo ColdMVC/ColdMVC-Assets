@@ -1,11 +1,23 @@
 /**
  * @accessors true
  * @singleton
- * @initMethod setup
+ * @setupMethod setup
  */
 component {
 
+	/**
+	 * @inject coldmvc
+	 */
+	property coldmvc;
+
+	/**
+	 * @inject coldmvc
+	 */
 	property fileSystem;
+	
+	/**
+	 * @inject coldmvc
+	 */
 	property pluginManager;
 
 	public any function init() {
