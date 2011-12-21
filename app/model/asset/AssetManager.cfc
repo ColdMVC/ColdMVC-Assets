@@ -1,9 +1,8 @@
 /**
- * @accessors true
  * @singleton
  * @setupMethod setup
  */
-component {
+component accessors="true" {
 
 	/**
 	 * @inject coldmvc
@@ -14,7 +13,7 @@ component {
 	 * @inject coldmvc
 	 */
 	property fileSystem;
-	
+
 	/**
 	 * @inject coldmvc
 	 */
